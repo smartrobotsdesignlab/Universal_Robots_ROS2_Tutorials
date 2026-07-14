@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find my_dual_robot_cell_description)/urdf/ur_macro.xacro"/>
+
+  <!-- existing args -->
+  <xacro:arg name="alice_reverse_port" default="50006"/>
+  <xacro:arg name="alice_trajectory_port" default="50009"/>
+  <xacro:arg name="alice_script_command_port" default="50002"/>
+  <xacro:arg name="alice_script_sender_port" default="50007"/>
+
+  <xacro:arg name="bob_reverse_port" default="50005"/>
+  <xacro:arg name="bob_trajectory_port" default="50003"/>
+  <xacro:arg name="bob_script_command_port" default="50004"/>
+  <xacro:arg name="bob_script_sender_port" default="50008"/>
+
+  <!-- NEW: toggles whether robot bases are fixed to the table (false) or left for SRDF virtual joints (true) -->
+  <xacro:arg name="not_use_virtual_base" default="true"/>
+
+
+  <xacro:macro name="my_dual_robot_cell" params="
+    parent
+    *origin
+
+    alice_ur_type
+    alice_joint_limits_parameters_file
+    alice_kinematics_parameters_file
+    alice_physical_parameters_file
+    alice_visual_parameters_file
+    alice_reverse_port
+    alice_trajectory_port
+    alice_script_command_port
+    alice_script_sender_port
+    alice_initial_positions:=${dict(shoulder_pan_joint=0.0,shoulder_lift_joint=0.0,elbow_joint=0.0,wrist_1_joint=-0.7854,wrist_2_joint=0.0,wrist_3_joint=0.0)}
+
+    bob_ur_type
+    bob_joint_limits_parameters_file
+    bob_kinematics_parameters_file
+    bob_physical_parameters_file
+    bob_visual_parameters_file
+    bob_reverse_port
+    bob_trajectory_port
+    bob_script_command_port
+    bob_script_sender_port
+    bob_initial_positions:=${dict(shoulder_pan_joint=0.0,shoulder_lift_joint=3.142,elbow_joint=0.0,wrist_1_joint=-2.356,wrist_2_joint=0.0,wrist_3_joint=0.0)}
+    ">
+
+    <!-- Table anchored to parent (usually 'world') -->
+    <joint name="table_base_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="table" />
+      <origin xyz="0.0 0.0 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="table">
+      <visual>
+        <geometry>
+          <mesh filename="package://my_robot_cell_description/meshes/frame_wo_screw_basetrans_m.dae"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0.0 0.0 0"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://my_robot_cell_description/meshes/frame_wo_screw_basetrans_m.stl"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0.0 0.0 0"/>
+      </collision>
+    </link>
+
+
+    <!-- =========================================================
+         FIXED-BASE MODE (default): mounts exist and are fixed to table
+         VIRTUAL-BASE MODE: mounts are NOT created; robots attach to ${parent}
+         ========================================================= -->
+
+    <!-- Always define these properties so we can reuse below -->
+    <!-- In fixed-base mode: parent = alice_robot_mount / bob_robot_mount -->
+    <!-- In virtual-base mode: parent = ${parent} (SRDF virtual joint + TF will place base_link) -->
+    <xacro:property name="alice_parent_link" value="${parent}"/>
+    <xacro:property name="bob_parent_link"   value="${parent}"/>
+
+    <xacro:if value="$(arg not_use_virtual_base)">
+      <!-- Creates mounts -->
+      <link name="alice_robot_mount"/>
+      <joint name="base_to_alice_robot_mount" type="floating">
+        <parent link="table"/>
+        <child link="alice_robot_mount"/>
+        <origin xyz="-0.25 0.0 0" rpy="0 0 0" />
+      </joint>
+
+      <link name="bob_robot_mount"/>
+      <joint name="base_to_bob_robot_mount" type="floating">
+        <parent link="table"/>
+        <child link="bob_robot_mount"/>
+        <origin xyz="0.25 0.0 0" rpy="0 0 0" />
+      </joint>
+
+      <!-- Override parents in fixed-base mode -->
+      <xacro:property name="alice_parent_link" value="alice_robot_mount"/>
+      <xacro:property name="bob_parent_link"   value="bob_robot_mount"/>
+    </xacro:if>
+
+
+    <!-- ======================
+         Robot instances
+         ====================== -->
+
+    <!-- Alice -->
+    <xacro:ur_robot
+      name="alice"
+      tf_prefix="alice_"
+      parent="${alice_parent_link}"
+      joint_limits_parameters_file="${alice_joint_limits_parameters_file}"
+      kinematics_parameters_file="${alice_kinematics_parameters_file}"
+      physical_parameters_file="${alice_physical_parameters_file}"
+      visual_parameters_file="${alice_visual_parameters_file}"
+      generate_ros2_control_tag="false"
+      reverse_port="${alice_reverse_port}"
+      trajectory_port="${alice_trajectory_port}"
+      script_sender_port="${alice_script_sender_port}"
+      script_command_port="${alice_script_command_port}"
+      initial_positions="${alice_initial_positions}">
+      
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:ur_robot>
+
+    <!-- Bob -->
+    <xacro:ur_robot
+      name="bob"
+      tf_prefix="bob_"
+      parent="${bob_parent_link}"
+      joint_limits_parameters_file="${bob_joint_limits_parameters_file}"
+      kinematics_parameters_file="${bob_kinematics_parameters_file}"
+      physical_parameters_file="${bob_physical_parameters_file}"
+      visual_parameters_file="${bob_visual_parameters_file}"
+      generate_ros2_control_tag="false"
+      reverse_port="${bob_reverse_port}"
+      trajectory_port="${bob_trajectory_port}"
+      script_sender_port="${bob_script_sender_port}"
+      script_command_port="${bob_script_command_port}"
+      initial_positions="${bob_initial_positions}">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:ur_robot>
+
+  </xacro:macro>
+
+</robot>

@@ -6,6 +6,8 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterFile
 from launch_ros.substitutions import FindPackageShare
+from launch.actions import TimerAction
+
 
 
 def launch_setup():
@@ -52,8 +54,7 @@ def launch_setup():
 
     alice_dashboard_client_node = Node(
         package="ur_robot_driver",
-        condition=IfCondition(alice_launch_dashboard_client)
-        and UnlessCondition(alice_use_mock_hardware),
+        condition=IfCondition(alice_launch_dashboard_client) and UnlessCondition(alice_use_mock_hardware),
         executable="dashboard_client",
         name="dashboard_client",
         namespace="alice",
@@ -64,8 +65,7 @@ def launch_setup():
 
     bob_dashboard_client_node = Node(
         package="ur_robot_driver",
-        condition=IfCondition(bob_launch_dashboard_client)
-        and UnlessCondition(bob_use_mock_hardware),
+        condition=IfCondition(bob_launch_dashboard_client) and UnlessCondition(bob_use_mock_hardware),
         executable="dashboard_client",
         name="dashboard_client",
         namespace="bob",
@@ -112,6 +112,8 @@ def launch_setup():
                     "bob_force_torque_sensor_broadcaster",
                     "alice_speed_scaling_state_broadcaster",
                     "bob_speed_scaling_state_broadcaster",
+                    "alice_hand_controller",
+                    "bob_hand_controller",
                 ]
             },
         ],
@@ -137,6 +139,10 @@ def launch_setup():
                     "bob_force_torque_sensor_broadcaster",
                     "alice_speed_scaling_state_broadcaster",
                     "bob_speed_scaling_state_broadcaster",
+                    "alice_ur_configuration_controller",
+                    "bob_ur_configuration_controller",
+                    "alice_hand_controller",
+                    "bob_hand_controller",
                 ]
             },
         ],
@@ -175,6 +181,10 @@ def launch_setup():
         "bob_speed_scaling_state_broadcaster",
         "alice_force_torque_sensor_broadcaster",
         "bob_force_torque_sensor_broadcaster",
+        "alice_ur_configuration_controller",
+        "bob_ur_configuration_controller",
+        "alice_hand_controller",
+        "bob_hand_controller",
     ]
     controllers_inactive = [
         "alice_forward_position_controller",
@@ -248,7 +258,7 @@ def launch_setup():
     )
 
     nodes_to_start = [
-        control_node,
+        #control_node,
         alice_dashboard_client_node,
         bob_dashboard_client_node,
         alice_controller_stopper_node,
@@ -284,7 +294,7 @@ def generate_launch_description():
                 "ur20",
                 "ur30",
             ],
-            default_value="ur3e",
+            default_value="ur5e",
         )
     )
     declared_arguments.append(
@@ -308,14 +318,14 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "alice_robot_ip",
-            default_value="192.168.57.101",
+            default_value="192.168.1.4",
             description="IP address by which alice can be reached.",
         )
     )
     declared_arguments.append(
         DeclareLaunchArgument(
             "bob_robot_ip",
-            default_value="192.168.57.100",
+            default_value="192.168.1.6",
             description="IP address by which bob can be reached.",
         )
     )
@@ -352,21 +362,21 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "alice_use_mock_hardware",
-            default_value="false",
+            default_value="true",
             description="Start alice with mock hardware mirroring command to its states.",
         )
     )
     declared_arguments.append(
         DeclareLaunchArgument(
             "bob_use_mock_hardware",
-            default_value="false",
+            default_value="true",
             description="Start bob with mock hardware mirroring command to its states.",
         )
     )
     declared_arguments.append(
         DeclareLaunchArgument(
             "alice_mock_sensor_commands",
-            default_value="false",
+            default_value="true",
             description="Enable mock command interfaces for alice's sensors used for simple simulations. "
             "Used only if 'use_mock_hardware' parameter is true.",
         )
@@ -374,7 +384,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "bob_mock_sensor_commands",
-            default_value="false",
+            default_value="true",
             description="Enable mock command interfaces for bob's sensors used for simple simulations. "
             "Used only if 'use_mock_hardware' parameter is true.",
         )
@@ -422,7 +432,9 @@ def generate_launch_description():
         )
     )
     declared_arguments.append(
-        DeclareLaunchArgument("launch_rviz", default_value="true", description="Launch RViz?")
+        DeclareLaunchArgument(
+            "launch_rviz", default_value="true", description="Launch RViz?"
+        )
     )
     declared_arguments.append(
         DeclareLaunchArgument(
