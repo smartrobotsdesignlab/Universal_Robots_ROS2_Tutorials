@@ -21,6 +21,7 @@ Visualization Manager:
         Trajectory Topic: display_planned_path
       Planning Scene Topic: monitored_planning_scene
       Robot Description: robot_description
+      Move Group Namespace: /move_group 
       Scene Geometry:
         Scene Alpha: 1
       Scene Robot:
