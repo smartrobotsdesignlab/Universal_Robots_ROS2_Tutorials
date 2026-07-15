@@ -36,5 +36,4 @@ and build the workspace.
 1. Launch with fake hardware to confirm installation
    ```
    ros2 launch my_dual_robot_cell_control start_robots.launch.py alice_use_mock_hardware:=true bob_use_mock_hardware:=true alice_ur_type:=ur5e bob_ur_type:=ur5e
-
    ```
