@@ -18,7 +18,7 @@ and build the workspace.
 1. Download the required repositories and install package dependencies:
    ```
    cd $COLCON_WS
-   git clone -b humble https://github.com/UniversalRobots/Universal_Robots_ROS2_Tutorials.git src/ur_tutorials
+   git clone -b humble-dual https://github.com/smartrobotsdesignlab/Universal_Robots_ROS2_Tutorials.git src/ur_tutorials
    rosdep update && rosdep install --ignore-src --from-paths src -y
    ```
 
